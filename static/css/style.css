@@ -1,0 +1,336 @@
+/* Custom styles for CEAF Farmácia */
+
+:root {
+    --primary-color: #0d6efd;
+    --secondary-color: #6c757d;
+    --success-color: #198754;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --info-color: #0dcaf0;
+    --light-color: #f8f9fa;
+    --dark-color: #212529;
+}
+
+/* Global styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    background-color: #f8f9fa;
+}
+
+/* Navigation */
+.navbar-brand {
+    font-weight: 600;
+    font-size: 1.5rem;
+}
+
+.navbar-nav .nav-link {
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.navbar-nav .nav-link:hover {
+    color: #fff !important;
+}
+
+/* Cards */
+.card {
+    border: none;
+    border-radius: 10px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
+}
+
+.card-header {
+    border-radius: 10px 10px 0 0 !important;
+    font-weight: 600;
+}
+
+/* Buttons */
+.btn {
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+    border: none;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #0b5ed7 0%, #0a58ca 100%);
+}
+
+/* Search */
+.form-control {
+    border-radius: 6px;
+    border: 2px solid #e9ecef;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Hero section */
+.bg-primary {
+    background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%) !important;
+}
+
+/* Condition cards */
+.condition-preview .small {
+    line-height: 1.8;
+}
+
+.condition-preview a:hover {
+    color: var(--primary-color) !important;
+    text-decoration: underline !important;
+}
+
+/* Hover effects */
+.hover-bg-light:hover {
+    background-color: #f8f9fa !important;
+    border-color: var(--primary-color) !important;
+}
+
+/* Alerts */
+.alert {
+    border-radius: 8px;
+}
+
+.border-left-primary {
+    border-left: 4px solid var(--primary-color) !important;
+}
+
+/* Footer */
+footer {
+    border-top: 1px solid #e9ecef;
+}
+
+/* Responsive utilities */
+@media (max-width: 768px) {
+    .display-6 {
+        font-size: 2rem;
+    }
+    
+    .lead {
+        font-size: 1rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+}
+
+/* Loading states */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* Search results */
+.search-result-item {
+    padding: 15px;
+    border-bottom: 1px solid #e9ecef;
+    transition: background-color 0.2s ease;
+}
+
+.search-result-item:hover {
+    background-color: #f8f9fa;
+}
+
+.search-result-item:last-child {
+    border-bottom: none;
+}
+
+.search-result-title {
+    font-weight: 600;
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.search-result-title:hover {
+    text-decoration: underline;
+}
+
+/* Category modal */
+.modal-dialog {
+    max-width: 800px;
+}
+
+.modal-content {
+    border-radius: 10px;
+    border: none;
+}
+
+.modal-header {
+    border-bottom: 2px solid var(--light-color);
+}
+
+/* Badges */
+.badge {
+    font-weight: 500;
+    padding: 6px 12px;
+}
+
+/* Print styles */
+@media print {
+    body {
+        background-color: white !important;
+    }
+    
+    .card {
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+    }
+    
+    .btn, .modal, .navbar, footer, .alert {
+        display: none !important;
+    }
+    
+    .container {
+        max-width: 100% !important;
+    }
+}
+
+/* Accessibility */
+.btn:focus,
+.form-control:focus,
+.card:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Animation classes */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.slide-in {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(-100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+/* Custom components */
+.info-card {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-left: 4px solid var(--primary-color);
+}
+
+.stat-card {
+    background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+    border-top: 3px solid var(--primary-color);
+}
+
+.feature-icon {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--info-color) 100%);
+    color: white;
+    margin: 0 auto 15px;
+}
+
+/* Example search links */
+.example-search {
+    color: var(--primary-color);
+    cursor: pointer;
+    text-decoration: underline;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.example-search:hover {
+    color: var(--dark-color);
+    text-decoration: none;
+}
+
+/* AI search indicators */
+.badge {
+    font-size: 0.75rem;
+}
+
+.search-result-item {
+    border-left: 3px solid transparent;
+    transition: border-color 0.2s ease;
+}
+
+.search-result-item:hover {
+    border-left-color: var(--primary-color);
+}
+
+/* AI-enhanced result highlighting */
+.ai-result {
+    background: linear-gradient(90deg, rgba(40, 167, 69, 0.1) 0%, rgba(255, 255, 255, 0) 100%);
+    border-left-color: #28a745;
+}
+
+/* Search tips */
+.search-tips {
+    background: rgba(13, 110, 253, 0.1);
+    border-left: 4px solid var(--primary-color);
+}
+
+/* Scroll to top button */
+.scroll-to-top {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    transition: all 0.3s ease;
+}
+
+.scroll-to-top:hover {
+    background: var(--dark-color);
+    transform: translateY(-2px);
+}
+
+.scroll-to-top.show {
+    display: flex;
+}

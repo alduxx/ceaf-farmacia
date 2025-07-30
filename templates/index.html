@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="bg-primary text-white rounded p-4 mb-4">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="display-6 mb-2">
+                        <i class="fas fa-pills me-2"></i>
+                        CEAF Farmácia
+                    </h1>
+                    <p class="lead mb-3">
+                        Informações simplificadas sobre medicamentos especializados do Distrito Federal
+                    </p>
+                    <p class="mb-0">
+                        Encontre informações sobre condições clínicas atendidas pelo 
+                        <strong>Componente Especializado da Assistência Farmacêutica (CEAF)</strong>
+                    </p>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="bg-white bg-opacity-20 rounded p-3">
+                        <h3 class="mb-1">{{ stats.total_conditions }}</h3>
+                        <small>Condições Cadastradas</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Search -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-search me-2 text-primary"></i>
+                    Busca Rápida
+                </h5>
+                <div class="row">
+                    <div class="col-md-8">
+                        <input type="text" class="form-control form-control-lg" 
+                               id="quickSearch" placeholder="Digite o nome da sua condição médica...">
+                    </div>
+                    <div class="col-md-4">
+                        <button class="btn btn-primary btn-lg w-100" onclick="performQuickSearch()">
+                            <i class="fas fa-search me-2"></i>Buscar
+                        </button>
+                    </div>
+                </div>
+                <small class="text-muted">
+                    <strong>Exemplos:</strong> 
+                    <span class="example-search" onclick="searchExample('espinhas')">espinhas</span>, 
+                    <span class="example-search" onclick="searchExample('TEA')">TEA</span>, 
+                    <span class="example-search" onclick="searchExample('alzeimer')">alzeimer</span>, 
+                    <span class="example-search" onclick="searchExample('açúcar alto')">açúcar alto</span>, 
+                    <span class="example-search" onclick="searchExample('tremor')">tremor</span>
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Categories Section -->
+{% if categories %}
+<div class="row mb-5">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="fas fa-th-large me-2 text-primary"></i>
+            Condições por Categoria
+        </h2>
+        
+        <div class="row">
+            {% for category_name, category_data in categories.items() %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title text-capitalize">
+                                <i class="fas fa-folder-open me-2 text-primary"></i>
+                                {{ category_name.replace('_', ' ').title() }}
+                            </h5>
+                            <p class="card-text text-muted small">
+                                {{ category_data.description }}
+                            </p>
+                            <div class="mb-3">
+                                <span class="badge bg-primary">
+                                    {{ category_data.conditions|length }} condições
+                                </span>
+                            </div>
+                            
+                            <!-- Show first few conditions -->
+                            <div class="condition-preview">
+                                {% for condition in category_data.conditions[:3] %}
+                                    <div class="small mb-1">
+                                        <a href="{{ url_for('condition_detail', condition_name=condition) }}" 
+                                           class="text-decoration-none">
+                                            <i class="fas fa-chevron-right me-1"></i>
+                                            {{ condition }}
+                                        </a>
+                                    </div>
+                                {% endfor %}
+                                
+                                {% if category_data.conditions|length > 3 %}
+                                    <div class="small text-muted">
+                                        ... e mais {{ category_data.conditions|length - 3 }} condições
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <button class="btn btn-outline-primary btn-sm w-100" 
+                                    onclick="showCategoryConditions('{{ category_name }}')">
+                                Ver Todas as Condições
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Common Conditions -->
+{% if common_conditions %}
+<div class="row mb-5">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="fas fa-star me-2 text-warning"></i>
+            Condições Mais Procuradas
+        </h2>
+        
+        <div class="row">
+            {% for condition in common_conditions[:8] %}
+                <div class="col-md-6 col-lg-3 mb-3">
+                    <div class="card shadow-sm">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">{{ condition }}</h6>
+                            <a href="{{ url_for('condition_detail', condition_name=condition) }}" 
+                               class="btn btn-outline-primary btn-sm">
+                                Ver Detalhes
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Information Cards -->
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card border-primary shadow-sm">
+            <div class="card-body text-center">
+                <i class="fas fa-info-circle fa-3x text-primary mb-3"></i>
+                <h5 class="card-title">O que é o CEAF?</h5>
+                <p class="card-text">
+                    O Componente Especializado da Assistência Farmacêutica garante 
+                    acesso a medicamentos de alto custo para condições específicas.
+                </p>
+                <a href="{{ url_for('about') }}" class="btn btn-primary">
+                    Saiba Mais
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card border-success shadow-sm">
+            <div class="card-body text-center">
+                <i class="fas fa-file-medical fa-3x text-success mb-3"></i>
+                <h5 class="card-title">Como Funciona?</h5>
+                <p class="card-text">
+                    Consulte se sua condição está cadastrada, 
+                    veja os requisitos e acesse os formulários necessários.
+                </p>
+                <a href="https://www.saude.df.gov.br/protocolos-clinicos-ter-resumos-e-formularios" 
+                   target="_blank" class="btn btn-success">
+                    Site Oficial
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card border-warning shadow-sm">
+            <div class="card-body text-center">
+                <i class="fas fa-refresh fa-3x text-warning mb-3"></i>
+                <h5 class="card-title">Dados Atualizados</h5>
+                <p class="card-text">
+                    As informações são extraídas diretamente do site oficial 
+                    e processadas para facilitar sua consulta.
+                </p>
+                <button class="btn btn-warning" onclick="refreshData()">
+                    Atualizar Dados
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Category Modal -->
+<div class="modal fade" id="categoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="categoryModalTitle">
+                    <i class="fas fa-folder-open me-2"></i>
+                    Condições da Categoria
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="categoryConditions">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Category data for JavaScript
+const categories = {{ categories|tojson if categories else '{}' }};
+
+function performQuickSearch() {
+    const query = document.getElementById('quickSearch').value.trim();
+    if (query) {
+        searchConditions(query);
+    }
+}
+
+function showCategoryConditions(categoryName) {
+    const category = categories[categoryName];
+    if (!category) return;
+    
+    const modalTitle = document.getElementById('categoryModalTitle');
+    const modalBody = document.getElementById('categoryConditions');
+    
+    modalTitle.innerHTML = `<i class="fas fa-folder-open me-2"></i>${categoryName.replace('_', ' ').toUpperCase()}`;
+    
+    let html = `<p class="text-muted mb-3">${category.description}</p>`;
+    html += '<div class="row">';
+    
+    category.conditions.forEach((condition, index) => {
+        html += `
+            <div class="col-md-6 mb-2">
+                <a href="/condition/${encodeURIComponent(condition)}" class="text-decoration-none">
+                    <div class="p-2 border rounded hover-bg-light">
+                        <i class="fas fa-chevron-right me-2 text-primary"></i>
+                        ${condition}
+                    </div>
+                </a>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    modalBody.innerHTML = html;
+    
+    new bootstrap.Modal(document.getElementById('categoryModal')).show();
+}
+
+function refreshData() {
+    const button = event.target;
+    const originalText = button.innerHTML;
+    
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Atualizando...';
+    button.disabled = true;
+    
+    fetch('/api/refresh')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Dados atualizados com sucesso!');
+                location.reload();
+            } else {
+                alert('Erro ao atualizar dados: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Erro ao atualizar dados: ' + error.message);
+        })
+        .finally(() => {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+}
+
+// Enter key support for quick search
+document.getElementById('quickSearch').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        performQuickSearch();
+    }
+});
+
+function searchExample(term) {
+    document.getElementById('quickSearch').value = term;
+    performQuickSearch();
+}
+</script>
+{% endblock %}

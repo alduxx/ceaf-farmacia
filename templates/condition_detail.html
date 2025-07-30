@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+
+{% block title %}{{ condition.name }} - CEAF Farmácia{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('index') }}">
+                <i class="fas fa-home me-1"></i>Início
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">{{ condition.name }}</li>
+    </ol>
+</nav>
+
+<!-- Main Content -->
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Condition Header -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h1 class="card-title mb-3">
+                    <i class="fas fa-file-medical me-2 text-primary"></i>
+                    {{ condition.name }}
+                </h1>
+                
+                {% if explanation %}
+                    <div class="alert alert-info border-left-primary">
+                        <h5 class="alert-heading">
+                            <i class="fas fa-lightbulb me-2"></i>
+                            Explicação Simplificada
+                        </h5>
+                        <div class="explanation-content">
+                            {{ explanation|replace('\n', '<br>')|safe }}
+                        </div>
+                    </div>
+                {% endif %}
+                
+                {% if condition.description %}
+                    <div class="mt-4">
+                        <h5>
+                            <i class="fas fa-info-circle me-2 text-secondary"></i>
+                            Descrição Técnica
+                        </h5>
+                        <p class="text-muted">{{ condition.description }}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Documents Section -->
+        {% if condition.documents %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <i class="fas fa-file-download me-2 text-primary"></i>
+                    Documentos Disponíveis
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for doc in condition.documents %}
+                        <div class="col-md-6 mb-3">
+                            <div class="border rounded p-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="me-3">
+                                        <i class="fas fa-file-pdf fa-2x text-danger"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">{{ doc.name }}</h6>
+                                        <a href="{{ doc.url }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-external-link-alt me-1"></i>
+                                            Abrir Documento
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Additional Information -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <i class="fas fa-question-circle me-2 text-primary"></i>
+                    Próximos Passos
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="text-center p-3 border rounded">
+                            <i class="fas fa-user-md fa-3x text-primary mb-3"></i>
+                            <h6>Consulte seu Médico</h6>
+                            <p class="small text-muted">
+                                Confirme se você atende aos critérios para receber 
+                                medicamentos pelo programa CEAF.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-center p-3 border rounded">
+                            <i class="fas fa-file-alt fa-3x text-success mb-3"></i>
+                            <h6>Documentação</h6>
+                            <p class="small text-muted">
+                                Prepare os documentos necessários conforme 
+                                os protocolos clínicos específicos.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Quick Actions -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>
+                    Ações Rápidas
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ condition.url }}" target="_blank" class="btn btn-outline-primary">
+                        <i class="fas fa-external-link-alt me-2"></i>
+                        Ver Página Oficial
+                    </a>
+                    
+                    <button class="btn btn-outline-secondary" onclick="shareCondition()">
+                        <i class="fas fa-share me-2"></i>
+                        Compartilhar
+                    </button>
+                    
+                    <button class="btn btn-outline-info" onclick="printCondition()">
+                        <i class="fas fa-print me-2"></i>
+                        Imprimir
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Important Notice -->
+        <div class="alert alert-warning shadow-sm">
+            <h6 class="alert-heading">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Importante
+            </h6>
+            <p class="small mb-2">
+                Esta é uma ferramenta informativa. Para obter medicamentos através do CEAF:
+            </p>
+            <ul class="small mb-0">
+                <li>Consulte um médico especialista</li>
+                <li>Verifique os critérios específicos</li>
+                <li>Acesse o site oficial para procedimentos</li>
+            </ul>
+        </div>
+        
+        <!-- Contact Information -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-phone me-2"></i>
+                    Precisa de Ajuda?
+                </h6>
+            </div>
+            <div class="card-body">
+                <p class="small mb-2">
+                    Para mais informações sobre o programa CEAF:
+                </p>
+                <ul class="small">
+                    <li>
+                        <strong>Site Oficial:</strong> 
+                        <a href="https://www.saude.df.gov.br" target="_blank">
+                            saude.df.gov.br
+                        </a>
+                    </li>
+                    <li><strong>Telefone:</strong> (61) 3348-4000</li>
+                    <li><strong>Ouvidoria SUS:</strong> 136</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Related Conditions -->
+<div class="row mt-5">
+    <div class="col-12">
+        <h3 class="mb-4">
+            <i class="fas fa-link me-2 text-secondary"></i>
+            Você também pode se interessar por:
+        </h3>
+        <div id="relatedConditions" class="row">
+            <!-- Will be populated by JavaScript -->
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function shareCondition() {
+    if (navigator.share) {
+        navigator.share({
+            title: '{{ condition.name }} - CEAF Farmácia',
+            text: 'Informações sobre {{ condition.name }} no programa CEAF',
+            url: window.location.href
+        });
+    } else {
+        // Fallback: copy to clipboard
+        navigator.clipboard.writeText(window.location.href).then(function() {
+            alert('Link copiado para a área de transferência!');
+        });
+    }
+}
+
+function printCondition() {
+    window.print();
+}
+
+// Load related conditions
+document.addEventListener('DOMContentLoaded', function() {
+    loadRelatedConditions();
+});
+
+function loadRelatedConditions() {
+    fetch('/api/conditions')
+        .then(response => response.json())
+        .then(conditions => {
+            // Get random 4 conditions (excluding current)
+            const currentCondition = '{{ condition.name }}';
+            const otherConditions = conditions.filter(c => c.name !== currentCondition);
+            const randomConditions = otherConditions.sort(() => 0.5 - Math.random()).slice(0, 4);
+            
+            const container = document.getElementById('relatedConditions');
+            let html = '';
+            
+            randomConditions.forEach(condition => {
+                html += `
+                    <div class="col-md-6 col-lg-3 mb-3">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-body text-center">
+                                <h6 class="card-title">${condition.name}</h6>
+                                <a href="/condition/${encodeURIComponent(condition.name)}" 
+                                   class="btn btn-outline-primary btn-sm">
+                                    Ver Detalhes
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Error loading related conditions:', error);
+        });
+}
+</script>
+
+<style>
+@media print {
+    .card-header, .btn, .alert, nav, footer, #relatedConditions {
+        display: none !important;
+    }
+    
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    .explanation-content {
+        background-color: #f8f9fa !important;
+        padding: 15px !important;
+        border-left: 4px solid #007bff !important;
+    }
+}
+
+.border-left-primary {
+    border-left: 4px solid #007bff !important;
+}
+</style>
+{% endblock %}

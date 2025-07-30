@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}Sobre - CEAF Farmácia{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <h1 class="mb-4">
+            <i class="fas fa-info-circle me-2 text-primary"></i>
+            Sobre o CEAF Farmácia
+        </h1>
+        
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h3>O que é este projeto?</h3>
+                <p>
+                    O <strong>CEAF Farmácia</strong> é uma ferramenta não-oficial desenvolvida para 
+                    facilitar o acesso a informações sobre medicamentos especializados disponíveis 
+                    através do Componente Especializado da Assistência Farmacêutica (CEAF) do Distrito Federal.
+                </p>
+                
+                <p>
+                    Este projeto utiliza tecnologia de inteligência artificial para extrair e processar 
+                    informações do site oficial do governo, apresentando-as de forma mais acessível 
+                    e compreensível para pacientes e familiares.
+                </p>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h3>O que é o CEAF?</h3>
+                <p>
+                    O Componente Especializado da Assistência Farmacêutica (CEAF) é uma estratégia 
+                    de acesso a medicamentos no âmbito do Sistema Único de Saúde (SUS), caracterizada 
+                    pela busca da garantia da integralidade do tratamento medicamentoso, em nível 
+                    ambulatorial, cujas linhas de cuidado estão definidas em Protocolos Clínicos e 
+                    Diretrizes Terapêuticas (PCDT).
+                </p>
+                
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <h5>
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Objetivos
+                        </h5>
+                        <ul>
+                            <li>Garantir acesso a medicamentos de alto custo</li>
+                            <li>Assegurar integralidade do tratamento</li>
+                            <li>Promover uso racional de medicamentos</li>
+                            <li>Melhorar qualidade de vida dos pacientes</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>
+                            <i class="fas fa-users text-primary me-2"></i>
+                            Quem pode utilizar?
+                        </h5>
+                        <ul>
+                            <li>Pacientes com condições específicas</li>
+                            <li>Mediante prescrição médica especializada</li>
+                            <li>Cumprindo critérios dos protocolos</li>
+                            <li>Residentes no Distrito Federal</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h3>Como funciona esta ferramenta?</h3>
+                
+                <div class="row">
+                    <div class="col-md-4 text-center mb-3">
+                        <i class="fas fa-spider fa-3x text-primary mb-2"></i>
+                        <h5>1. Coleta</h5>
+                        <p class="small">
+                            Extraímos automaticamente informações do site oficial do governo
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-center mb-3">
+                        <i class="fas fa-robot fa-3x text-success mb-2"></i>
+                        <h5>2. Processamento</h5>
+                        <p class="small">
+                            Utilizamos IA para simplificar e organizar as informações médicas
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-center mb-3">
+                        <i class="fas fa-search fa-3x text-info mb-2"></i>
+                        <h5>3. Consulta</h5>
+                        <p class="small">
+                            Você pode buscar e consultar informações de forma mais fácil
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="alert alert-warning">
+            <h5 class="alert-heading">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Importante
+            </h5>
+            <p class="mb-2">
+                Esta ferramenta é apenas informativa e <strong>não substitui</strong> a consulta médica 
+                ou os procedimentos oficiais do programa CEAF.
+            </p>
+            <ul class="mb-0">
+                <li>Sempre consulte um médico especialista</li>
+                <li>Verifique informações no site oficial</li>
+                <li>Siga os protocolos estabelecidos pelo governo</li>
+                <li>Este projeto não tem vinculação oficial com o governo</li>
+            </ul>
+        </div>
+        
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h3>Links Úteis</h3>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Sites Oficiais</h5>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <a href="https://www.saude.df.gov.br/protocolos-clinicos-ter-resumos-e-formularios" 
+                                   target="_blank" class="text-decoration-none">
+                                    <i class="fas fa-external-link-alt me-2"></i>
+                                    Protocolos Clínicos - DF
+                                </a>
+                            </li>
+                            <li class="mb-2">
+                                <a href="https://www.gov.br/saude/pt-br" target="_blank" class="text-decoration-none">
+                                    <i class="fas fa-external-link-alt me-2"></i>
+                                    Ministério da Saúde
+                                </a>
+                            </li>
+                            <li class="mb-2">
+                                <a href="https://www.saude.df.gov.br/" target="_blank" class="text-decoration-none">
+                                    <i class="fas fa-external-link-alt me-2"></i>
+                                    Secretaria de Saúde - DF
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Contatos</h5>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="fas fa-phone me-2"></i>
+                                Secretaria de Saúde: (61) 3348-4000
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-headset me-2"></i>
+                                Ouvidoria SUS: 136
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-envelope me-2"></i>
+                                ouvidoria.saude@df.gov.br
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
