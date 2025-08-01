@@ -11,12 +11,17 @@ from typing import List, Dict, Optional
 from urllib.parse import urljoin, urlparse
 import os
 from datetime import datetime
+import io
+import PyPDF2
+import pdfplumber
+from llm_processor import LLMProcessor
+from pdf_text_parser import parse_pdf_text
 
 
 class CEAFScraper:
     """Scraper for CEAF clinical conditions and protocols."""
     
-    def __init__(self, base_url: str = "https://www.saude.df.gov.br"):
+    def __init__(self, base_url: str = "https://www.saude.df.gov.br", use_llm: bool = True):
         self.base_url = base_url
         self.target_url = f"{base_url}/protocolos-clinicos-ter-resumos-e-formularios"
         self.session = requests.Session()
@@ -27,6 +32,9 @@ class CEAFScraper:
         # Set up logging
         logging.basicConfig(level=logging.INFO)
         self.logger = logging.getLogger(__name__)
+        
+        # Initialize LLM processor if requested
+        self.llm_processor = LLMProcessor() if use_llm else None
         
     def fetch_page(self, url: str, retries: int = 3) -> Optional[BeautifulSoup]:
         """Fetch and parse a web page with retry logic."""
@@ -213,23 +221,162 @@ class CEAFScraper:
         
         return details
     
-    def scrape_all_conditions(self, include_details: bool = False) -> Dict[str, any]:
+    def find_condition_pdf(self, condition_url: str, condition_name: str) -> Optional[str]:
+        """Find the PDF URL for a specific condition on its page."""
+        soup = self.fetch_page(condition_url)
+        if not soup:
+            return None
+        
+        pdf_links = []
+        
+        # Find all PDF links on the page
+        for link in soup.find_all('a', href=True):
+            href = link.get('href', '')
+            text = link.get_text(strip=True)
+            
+            if '.pdf' in href.lower():
+                pdf_url = urljoin(self.base_url, href)
+                pdf_links.append({
+                    'url': pdf_url,
+                    'text': text,
+                    'href': href
+                })
+        
+        if not pdf_links:
+            self.logger.warning(f"No PDF links found for {condition_name}")
+            return None
+        
+        # Try to match PDF with condition name
+        condition_words = set(condition_name.lower().split())
+        best_match = None
+        best_score = 0
+        
+        for pdf_link in pdf_links:
+            pdf_text = pdf_link['text'].lower()
+            pdf_href = pdf_link['href'].lower()
+            
+            # Check if condition words appear in PDF link text or URL
+            matches = 0
+            for word in condition_words:
+                if word in pdf_text or word in pdf_href:
+                    matches += 1
+            
+            score = matches / len(condition_words) if condition_words else 0
+            
+            if score > best_score:
+                best_score = score
+                best_match = pdf_link
+        
+        if best_match and best_score > 0.3:  # At least 30% word match
+            self.logger.info(f"Found matching PDF for {condition_name}: {best_match['text']}")
+            return best_match['url']
+        
+        # If no good match, return the first PDF (fallback)
+        if pdf_links:
+            self.logger.info(f"Using first PDF as fallback for {condition_name}")
+            return pdf_links[0]['url']
+        
+        return None
+    
+    def download_pdf(self, pdf_url: str) -> Optional[bytes]:
+        """Download PDF content from URL."""
+        try:
+            self.logger.info(f"Downloading PDF from {pdf_url}")
+            response = self.session.get(pdf_url, timeout=60)
+            response.raise_for_status()
+            
+            if 'application/pdf' not in response.headers.get('Content-Type', ''):
+                self.logger.warning(f"URL may not be a PDF: {pdf_url}")
+            
+            return response.content
+        except Exception as e:
+            self.logger.error(f"Failed to download PDF from {pdf_url}: {e}")
+            return None
+    
+    def extract_pdf_text(self, pdf_content: bytes) -> str:
+        """Extract text from PDF content."""
+        try:
+            # Try with pdfplumber first (better for tables and formatted text)
+            with pdfplumber.open(io.BytesIO(pdf_content)) as pdf:
+                text_parts = []
+                for page in pdf.pages:
+                    page_text = page.extract_text()
+                    if page_text:
+                        text_parts.append(page_text)
+                
+                if text_parts:
+                    return '\n\n'.join(text_parts)
+            
+        except Exception as e:
+            self.logger.warning(f"pdfplumber failed, trying PyPDF2: {e}")
+            
+            # Fallback to PyPDF2
+            try:
+                pdf_reader = PyPDF2.PdfReader(io.BytesIO(pdf_content))
+                text_parts = []
+                
+                for page in pdf_reader.pages:
+                    page_text = page.extract_text()
+                    if page_text:
+                        text_parts.append(page_text)
+                
+                return '\n\n'.join(text_parts) if text_parts else ""
+                
+            except Exception as e2:
+                self.logger.error(f"Both PDF extraction methods failed: {e2}")
+                return ""
+        
+        return ""
+    
+    def scrape_all_conditions(self, include_details: bool = False, include_pdf_data: bool = False) -> Dict[str, any]:
         """Scrape all clinical conditions and optionally their details."""
         self.logger.info("Starting CEAF conditions scraping...")
         
         # Get the list of conditions
         conditions = self.extract_clinical_conditions()
         
-        if include_details:
+        if include_details or include_pdf_data:
             self.logger.info("Extracting detailed information for each condition...")
             for i, condition in enumerate(conditions):
                 self.logger.info(f"Processing condition {i+1}/{len(conditions)}: {condition['name']}")
                 
-                details = self.extract_condition_details(condition['url'])
-                condition.update(details)
+                if include_details:
+                    details = self.extract_condition_details(condition['url'])
+                    condition.update(details)
+                
+                if include_pdf_data:
+                    pdf_url = self.find_condition_pdf(condition['url'], condition['name'])
+                    if pdf_url:
+                        condition['pdf_url'] = pdf_url
+                        pdf_content = self.download_pdf(pdf_url)
+                        if pdf_content:
+                            pdf_text = self.extract_pdf_text(pdf_content)
+                            condition['pdf_text'] = pdf_text
+                            condition['pdf_extracted'] = True
+                            
+                            # Extract structured data using LLM if available, otherwise use text parser
+                            if self.llm_processor and pdf_text.strip():
+                                try:
+                                    structured_data = self.llm_processor.extract_pdf_structured_data(
+                                        pdf_text, condition['name']
+                                    )
+                                    condition.update(structured_data)
+                                except Exception as e:
+                                    self.logger.warning(f"LLM extraction failed for {condition['name']}, using text parser: {e}")
+                                    # Fallback to text parser
+                                    structured_data = parse_pdf_text(pdf_text, condition['name'])
+                                    condition.update(structured_data)
+                            elif pdf_text.strip():
+                                # Use text parser when LLM is not available
+                                structured_data = parse_pdf_text(pdf_text, condition['name'])
+                                condition.update(structured_data)
+                        else:
+                            condition['pdf_extracted'] = False
+                    else:
+                        condition['pdf_extracted'] = False
                 
                 # Be respectful to the server
-                time.sleep(1)
+                time.sleep(2)
         
         result = {
             'scraped_at': datetime.now().isoformat(),

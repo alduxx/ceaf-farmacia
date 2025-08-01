@@ -328,7 +328,12 @@ class DataManager:
         if not os.path.exists(data_dir):
             return {}
         
-        files = [f for f in os.listdir(data_dir) if f.startswith('ceaf_conditions_') and f.endswith('.json')]
+        # Look for all types of condition data files
+        files = [f for f in os.listdir(data_dir) if 
+                (f.startswith('ceaf_conditions_') or 
+                 f.startswith('enhanced_ceaf_conditions_') or 
+                 f.startswith('enhanced_parsed_ceaf_conditions_')) 
+                and f.endswith('.json')]
         if not files:
             return {}
         
@@ -495,6 +500,88 @@ def search():
         'total': len(unique_results),
         'query': query,
         'source': 'ai_enhanced' if len(unique_results) > len(results) else 'standard'
+    })
+
+
+@app.route('/search/medication')
+def search_by_medication():
+    """Search for conditions by medication name."""
+    query = request.args.get('q', '').lower().strip()
+    
+    if not query:
+        return jsonify({'results': [], 'message': 'Por favor, digite um nome de medicamento'})
+    
+    # Check cache first
+    cache_key = f"medication_{query}"
+    cached_results = cache_manager.get_search_results(cache_key)
+    if cached_results is not None:
+        logger.info(f"Found cached medication search results for '{query}'")
+        return jsonify({
+            'results': cached_results[:20],
+            'total': len(cached_results),
+            'query': query,
+            'source': 'cache'
+        })
+    
+    results = []
+    
+    # Search through conditions with medication data
+    for condition in SCRAPED_DATA.get('conditions', []):
+        if condition.get('medicamentos'):
+            for medication in condition['medicamentos']:
+                if query in medication.lower():
+                    results.append(condition)
+                    break  # Don't add the same condition multiple times
+    
+    # Cache the results
+    cache_manager.set_search_results(cache_key, results)
+    
+    return jsonify({
+        'results': results[:20],
+        'total': len(results),
+        'query': query,
+        'source': 'medication_search'
+    })
+
+
+@app.route('/search/cid')
+def search_by_cid():
+    """Search for conditions by CID-10 code."""
+    query = request.args.get('q', '').upper().strip()
+    
+    if not query:
+        return jsonify({'results': [], 'message': 'Por favor, digite um código CID-10'})
+    
+    # Check cache first
+    cache_key = f"cid_{query}"
+    cached_results = cache_manager.get_search_results(cache_key)
+    if cached_results is not None:
+        logger.info(f"Found cached CID search results for '{query}'")
+        return jsonify({
+            'results': cached_results[:20],
+            'total': len(cached_results),
+            'query': query,
+            'source': 'cache'
+        })
+    
+    results = []
+    
+    # Search through conditions with CID-10 data
+    for condition in SCRAPED_DATA.get('conditions', []):
+        if condition.get('cid_10'):
+            for cid in condition['cid_10']:
+                if query in cid.upper():
+                    results.append(condition)
+                    break  # Don't add the same condition multiple times
+    
+    # Cache the results
+    cache_manager.set_search_results(cache_key, results)
+    
+    return jsonify({
+        'results': results[:20],
+        'total': len(results),
+        'query': query,
+        'source': 'cid_search'
     })
 
 

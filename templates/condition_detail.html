@@ -50,6 +50,128 @@
             </div>
         </div>
         
+        <!-- Structured PDF Information -->
+        {% if condition.cid_10 or condition.medicamentos or condition.documentos_pessoais or condition.documentos_medicos or condition.exames or condition.observacoes %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-clipboard-list me-2"></i>
+                    Informações Detalhadas do Protocolo
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- CID-10 -->
+                    {% if condition.cid_10 %}
+                    <div class="col-md-6 mb-4">
+                        <h6 class="text-primary">
+                            <i class="fas fa-code me-2"></i>
+                            CID-10
+                        </h6>
+                        <ul class="list-unstyled">
+                            {% for cid in condition.cid_10 %}
+                            <li class="mb-1">
+                                <span class="badge bg-light text-dark">{{ cid }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Medicamentos -->
+                    {% if condition.medicamentos %}
+                    <div class="col-md-6 mb-4">
+                        <h6 class="text-primary">
+                            <i class="fas fa-pills me-2"></i>
+                            Medicamentos
+                        </h6>
+                        <ul class="list-unstyled">
+                            {% for med in condition.medicamentos %}
+                            <li class="mb-1">
+                                <i class="fas fa-pill me-1 text-success"></i>
+                                {{ med }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Documents Required -->
+                <div class="row">
+                    {% if condition.documentos_pessoais %}
+                    <div class="col-md-6 mb-4">
+                        <h6 class="text-warning">
+                            <i class="fas fa-id-card me-2"></i>
+                            Documentos Pessoais Necessários
+                        </h6>
+                        <ul class="list-group list-group-flush">
+                            {% for doc in condition.documentos_pessoais %}
+                            <li class="list-group-item border-0 px-0">
+                                <i class="fas fa-check-circle me-2 text-success"></i>
+                                {{ doc }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    
+                    {% if condition.documentos_medicos %}
+                    <div class="col-md-6 mb-4">
+                        <h6 class="text-warning">
+                            <i class="fas fa-user-md me-2"></i>
+                            Documentos Médicos Necessários
+                        </h6>
+                        <ul class="list-group list-group-flush">
+                            {% for doc in condition.documentos_medicos %}
+                            <li class="list-group-item border-0 px-0">
+                                <i class="fas fa-stethoscope me-2 text-info"></i>
+                                {{ doc }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Medical Exams -->
+                {% if condition.exames %}
+                <div class="mb-4">
+                    <h6 class="text-info">
+                        <i class="fas fa-microscope me-2"></i>
+                        Exames Necessários
+                    </h6>
+                    <ul class="list-group">
+                        {% for exam in condition.exames %}
+                        <li class="list-group-item">
+                            <i class="fas fa-vial me-2 text-danger"></i>
+                            {{ exam }}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                
+                <!-- Observations -->
+                {% if condition.observacoes %}
+                <div class="mb-3">
+                    <h6 class="text-secondary">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        Observações Importantes
+                    </h6>
+                    <div class="alert alert-info">
+                        <ul class="mb-0">
+                            {% for obs in condition.observacoes %}
+                            <li>{{ obs }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
         <!-- Documents Section -->
         {% if condition.documents %}
         <div class="card shadow-sm mb-4">

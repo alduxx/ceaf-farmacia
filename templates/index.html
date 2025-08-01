@@ -30,7 +30,7 @@
     </div>
 </div>
 
-<!-- Quick Search -->
+<!-- Search Section -->
 <div class="row mb-5">
     <div class="col-12">
         <div class="card shadow-sm">
@@ -39,25 +39,99 @@
                     <i class="fas fa-search me-2 text-primary"></i>
                     Busca Rápida
                 </h5>
-                <div class="row">
-                    <div class="col-md-8">
-                        <input type="text" class="form-control form-control-lg" 
-                               id="quickSearch" placeholder="Digite o nome da sua condição médica...">
-                    </div>
-                    <div class="col-md-4">
-                        <button class="btn btn-primary btn-lg w-100" onclick="performQuickSearch()">
-                            <i class="fas fa-search me-2"></i>Buscar
+                
+                <!-- Search Tabs -->
+                <ul class="nav nav-tabs mb-3" id="searchTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="condition-tab" data-bs-toggle="tab" 
+                                data-bs-target="#condition-search" type="button" role="tab">
+                            <i class="fas fa-file-medical me-1"></i>
+                            Por Condição
                         </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="medication-tab" data-bs-toggle="tab" 
+                                data-bs-target="#medication-search" type="button" role="tab">
+                            <i class="fas fa-pills me-1"></i>
+                            Por Medicamento
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="cid-tab" data-bs-toggle="tab" 
+                                data-bs-target="#cid-search" type="button" role="tab">
+                            <i class="fas fa-code me-1"></i>
+                            Por CID-10
+                        </button>
+                    </li>
+                </ul>
+                
+                <!-- Search Tab Content -->
+                <div class="tab-content" id="searchTabContent">
+                    <!-- Condition Search -->
+                    <div class="tab-pane fade show active" id="condition-search" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <input type="text" class="form-control form-control-lg" 
+                                       id="quickSearch" placeholder="Digite o nome da sua condição médica...">
+                            </div>
+                            <div class="col-md-4">
+                                <button class="btn btn-primary btn-lg w-100" onclick="performQuickSearch()">
+                                    <i class="fas fa-search me-2"></i>Buscar
+                                </button>
+                            </div>
+                        </div>
+                        <small class="text-muted">
+                            <strong>Exemplos:</strong> 
+                            <span class="example-search" onclick="searchExample('espinhas')">espinhas</span>, 
+                            <span class="example-search" onclick="searchExample('TEA')">TEA</span>, 
+                            <span class="example-search" onclick="searchExample('alzeimer')">alzeimer</span>, 
+                            <span class="example-search" onclick="searchExample('açúcar alto')">açúcar alto</span>, 
+                            <span class="example-search" onclick="searchExample('tremor')">tremor</span>
+                        </small>
+                    </div>
+                    
+                    <!-- Medication Search -->
+                    <div class="tab-pane fade" id="medication-search" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <input type="text" class="form-control form-control-lg" 
+                                       id="medicationSearch" placeholder="Digite o nome do medicamento...">
+                            </div>
+                            <div class="col-md-4">
+                                <button class="btn btn-success btn-lg w-100" onclick="performMedicationSearch()">
+                                    <i class="fas fa-pills me-2"></i>Buscar
+                                </button>
+                            </div>
+                        </div>
+                        <small class="text-muted">
+                            <strong>Exemplos:</strong> 
+                            <span class="example-search" onclick="searchMedicationExample('rituximab')">rituximab</span>, 
+                            <span class="example-search" onclick="searchMedicationExample('adalimumab')">adalimumab</span>, 
+                            <span class="example-search" onclick="searchMedicationExample('metotrexato')">metotrexato</span>
+                        </small>
+                    </div>
+                    
+                    <!-- CID-10 Search -->
+                    <div class="tab-pane fade" id="cid-search" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <input type="text" class="form-control form-control-lg" 
+                                       id="cidSearch" placeholder="Digite o código CID-10...">
+                            </div>
+                            <div class="col-md-4">
+                                <button class="btn btn-info btn-lg w-100" onclick="performCidSearch()">
+                                    <i class="fas fa-code me-2"></i>Buscar
+                                </button>
+                            </div>
+                        </div>
+                        <small class="text-muted">
+                            <strong>Exemplos:</strong> 
+                            <span class="example-search" onclick="searchCidExample('M05')">M05</span>, 
+                            <span class="example-search" onclick="searchCidExample('L70.0')">L70.0</span>, 
+                            <span class="example-search" onclick="searchCidExample('E10')">E10</span>
+                        </small>
                     </div>
                 </div>
-                <small class="text-muted">
-                    <strong>Exemplos:</strong> 
-                    <span class="example-search" onclick="searchExample('espinhas')">espinhas</span>, 
-                    <span class="example-search" onclick="searchExample('TEA')">TEA</span>, 
-                    <span class="example-search" onclick="searchExample('alzeimer')">alzeimer</span>, 
-                    <span class="example-search" onclick="searchExample('açúcar alto')">açúcar alto</span>, 
-                    <span class="example-search" onclick="searchExample('tremor')">tremor</span>
-                </small>
             </div>
         </div>
     </div>

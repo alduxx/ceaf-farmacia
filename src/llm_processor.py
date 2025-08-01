@@ -178,6 +178,92 @@ class LLMProcessor:
         
         return keywords_map
     
+    def extract_pdf_structured_data(self, pdf_text: str, condition_name: str) -> Dict[str, Any]:
+        """Extract structured data from PDF text using LLM."""
+        if not self.client or not pdf_text.strip():
+            return self._fallback_pdf_extraction(condition_name, pdf_text)
+        
+        prompt = f"""
+        You are analyzing a medical protocol document for the condition: {condition_name}
+        
+        From the following PDF text, extract the specific information requested. 
+        The document is in Portuguese and contains official medical protocol information.
+        
+        PDF Text:
+        {pdf_text[:8000]}  # Limit to avoid token limits
+        
+        Please extract and return ONLY the following information in JSON format:
+        {{
+            "cid_10": ["list of CID-10 codes mentioned"],
+            "medicamentos": ["list of medications mentioned"],
+            "documentos_pessoais": ["personal documents required from patient"],
+            "documentos_medicos": ["documents that must be provided by doctor"],
+            "exames": ["medical exams/tests required"],
+            "observacoes": ["important observations or notes"]
+        }}
+        
+        Instructions:
+        - Return ONLY valid JSON, no additional text
+        - If a section is not found, use an empty array []
+        - Be precise and extract only what is explicitly mentioned
+        - Maintain Portuguese language for the extracted content
+        - For CID-10 codes, include both code and description if available
+        """
+        
+        try:
+            response = self._call_llm(prompt)
+            # Clean the response to ensure it's valid JSON
+            response = response.strip()
+            if response.startswith('```json'):
+                response = response[7:]
+            if response.endswith('```'):
+                response = response[:-3]
+            
+            structured_data = json.loads(response)
+            
+            # Validate the structure
+            required_keys = ["cid_10", "medicamentos", "documentos_pessoais", "documentos_medicos", "exames", "observacoes"]
+            for key in required_keys:
+                if key not in structured_data:
+                    structured_data[key] = []
+            
+            structured_data.update({
+                "condition": condition_name,
+                "extracted_at": datetime.now().isoformat(),
+                "extraction_method": "llm"
+            })
+            
+            return structured_data
+            
+        except json.JSONDecodeError as e:
+            self.logger.error(f"Failed to parse JSON response for {condition_name}: {e}")
+            return self._fallback_pdf_extraction(condition_name, pdf_text)
+        except Exception as e:
+            self.logger.error(f"Failed to extract PDF data for {condition_name}: {e}")
+            return self._fallback_pdf_extraction(condition_name, pdf_text)
+    
+    def _fallback_pdf_extraction(self, condition_name: str, pdf_text: str = "") -> Dict[str, Any]:
+        """Fallback PDF data extraction when LLM is not available."""
+        # Try to use text parser if we have PDF text
+        if pdf_text.strip():
+            try:
+                from pdf_text_parser import parse_pdf_text
+                return parse_pdf_text(pdf_text, condition_name)
+            except ImportError:
+                self.logger.warning("Text parser not available, using empty fallback")
+        
+        return {
+            "condition": condition_name,
+            "cid_10": [],
+            "medicamentos": [],
+            "documentos_pessoais": [],
+            "documentos_medicos": [],
+            "exames": [],
+            "observacoes": [],
+            "extracted_at": datetime.now().isoformat(),
+            "extraction_method": "fallback"
+        }
+    
     def _call_llm(self, prompt: str) -> str:
         """Call the configured LLM with the given prompt."""
         if self.provider == "openai":
@@ -190,12 +276,12 @@ class LLMProcessor:
             return response.choices[0].message.content
             
         elif self.provider == "anthropic":
-            response = self.client.messages.create(
+            message = self.client.messages.create(
                 model="claude-3-sonnet-20240229",
                 max_tokens=2000,
                 messages=[{"role": "user", "content": prompt}]
             )
-            return response.content[0].text
+            return message.content[0].text
         
         else:
             raise ValueError(f"Unsupported LLM provider: {self.provider}")
