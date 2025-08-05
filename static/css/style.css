@@ -334,3 +334,66 @@ footer {
 .scroll-to-top.show {
     display: flex;
 }
+
+/* Description display styles */
+.description-box {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-left: 4px solid var(--info-color) !important;
+}
+
+.condition-description {
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+.condition-description p {
+    margin-bottom: 0.25rem !important;
+}
+
+.condition-description .fas {
+    font-size: 0.75rem;
+}
+
+/* Search result item styling */
+.search-result-item {
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    background: white;
+    transition: all 0.2s ease;
+}
+
+.search-result-item:hover {
+    background: #f8f9fa;
+    border-color: var(--primary-color);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.search-result-title {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: color 0.2s ease;
+}
+
+.search-result-title:hover {
+    color: var(--dark-color);
+    text-decoration: none;
+}
+
+/* Enhanced description formatting */
+.condition-description strong {
+    font-weight: 600;
+    color: var(--dark-color);
+}
+
+.condition-description .text-success {
+    color: var(--success-color) !important;
+}
+
+.condition-description .text-info {
+    color: var(--info-color) !important;
+}

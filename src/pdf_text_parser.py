@@ -37,26 +37,45 @@ def parse_pdf_text(pdf_text: str, condition_name: str) -> Dict[str, Any]:
     # Extract medications
     in_medications_section = False
     for line in lines:
-        line = line.strip()
+        line_stripped = line.strip()
         
-        if line.upper().startswith('MEDICAMENTOS'):
+        # Look for medications section header (can be split across lines)
+        if 'MEDICAM' in line_stripped.upper() and ('ENTOS' in line_stripped.upper() or 'AMENTOS' in line_stripped.upper()):
             in_medications_section = True
             continue
         
         if in_medications_section:
             # Stop when we hit another section
-            if line.upper().startswith('DOCUMENTOS') or line.upper().startswith('EXAMES') or line.upper().startswith('OBSERVAÇÕES'):
+            if line_stripped.upper().startswith('DOCUMENTOS') or line_stripped.upper().startswith('EXAMES') or line_stripped.upper().startswith('OBSERVAÇÕES'):
                 in_medications_section = False
                 continue
             
-            # Extract medication names (usually start with a bullet point or are on their own line)
-            if line and not line.startswith(' ') and len(line) > 3:
-                # Clean up the line - remove bullet points and extra formatting
-                medication = re.sub(r'^[•\-\s]*', '', line)
-                medication = re.sub(r'\s*;\s*$', '', medication)  # Remove trailing semicolon
-                
-                if medication and len(medication) > 2:  # Skip very short lines
-                    result["medicamentos"].append(medication)
+            # Skip CID-10 lines and other non-medication content
+            if 'CID-10' in line_stripped.upper() or line_stripped.upper().startswith('EPILEPSIA'):
+                continue
+            
+            # Extract medication names (look for bullet points or medication-like patterns)
+            if line_stripped and len(line_stripped) > 3:
+                # Check if line contains bullet points (Unicode or regular) or looks like a medication
+                if ('\uf0b7' in line_stripped or '•' in line_stripped or 
+                    re.search(r'\d+\s*[Mm]g', line_stripped) or 
+                    re.search(r'[A-Z][a-z]+(?:ina|mab|cin|tina|zam|tol)', line_stripped)):
+                    
+                    # Skip non-medication content
+                    if ('PRESCRIÇÃO' in line_stripped.upper() or 
+                        'RELATÓRIO' in line_stripped.upper() or 
+                        'LAUDO' in line_stripped.upper() or
+                        'LME' in line_stripped.upper() or
+                        'NECESSÁRIO INFORMAR' in line_stripped.upper()):
+                        continue
+                    
+                    # Clean up the line - remove bullet points and extra formatting
+                    medication = re.sub(r'^[\uf0b7•\-\s]*', '', line_stripped)
+                    medication = re.sub(r'\s*;\s*$', '', medication)  # Remove trailing semicolon
+                    medication = medication.strip()
+                    
+                    if medication and len(medication) > 2 and not medication.upper().startswith('MEDICAM'):
+                        result["medicamentos"].append(medication)
     
     # Extract personal documents
     in_personal_docs = False

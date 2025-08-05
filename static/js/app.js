@@ -3,6 +3,56 @@
 // Global variables
 let searchModal;
 
+// Format description for display - defined early to avoid scope issues
+function formatDescription(description) {
+    console.log('formatDescription called with:', description);
+    
+    if (!description) {
+        console.log('formatDescription: no description provided');
+        return '';
+    }
+    
+    // Split description by newlines (our custom format: medications \n CID-10)
+    const lines = description.split('\n').filter(line => line.trim());
+    console.log('formatDescription: lines found:', lines.length, lines);
+    
+    if (lines.length === 0) {
+        return `<p class="text-muted small mb-0">Sem descrição disponível</p>`;
+    }
+    
+    if (lines.length === 1) {
+        // Single line - could be medications or regular description
+        const line = lines[0].trim();
+        if (line.length > 120) {
+            return `<p class="text-muted small mb-0">${line.substring(0, 120)}...</p>`;
+        }
+        return `<p class="text-muted small mb-0">${line}</p>`;
+    }
+    
+    // Multiple lines - likely our custom format (medications, CID-10)
+    let html = '';
+    
+    // First line - medications
+    if (lines[0] && lines[0].trim()) {
+        const medications = lines[0].trim();
+        html += `<p class="text-muted small mb-1">
+            <i class="fas fa-pills me-1 text-success"></i>
+            <strong>Medicamentos:</strong> ${medications.length > 60 ? medications.substring(0, 60) + '...' : medications}
+        </p>`;
+    }
+    
+    // Second line - CID-10
+    if (lines[1] && lines[1].trim()) {
+        const cidCodes = lines[1].trim();
+        html += `<p class="text-muted small mb-0">
+            <i class="fas fa-code me-1 text-info"></i>
+            <strong>CID-10:</strong> ${cidCodes}
+        </p>`;
+    }
+    
+    return html;
+}
+
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     initializeApp();
@@ -130,6 +180,9 @@ function displaySearchResults(data, query) {
     `;
     
     data.results.forEach(condition => {
+        // Debug logging
+        console.log('Processing condition:', condition.name, 'Description:', !!condition.description);
+        
         html += `
             <div class="search-result-item">
                 <div class="d-flex justify-content-between align-items-start">
@@ -140,10 +193,14 @@ function displaySearchResults(data, query) {
                             ${condition.name}
                         </a>
                         ${condition.description ? `
-                            <p class="text-muted small mt-1 mb-0">
-                                ${condition.description.substring(0, 150)}${condition.description.length > 150 ? '...' : ''}
-                            </p>
-                        ` : ''}
+                            <div class="condition-description mt-2 mb-1">
+                                ${formatDescription(condition.description)}
+                            </div>
+                        ` : `
+                            <div class="text-muted small mt-1">
+                                <em>Sem descrição disponível</em>
+                            </div>
+                        `}
                     </div>
                     <div class="ms-3">
                         <a href="/condition/${encodeURIComponent(condition.name)}" 
@@ -156,7 +213,10 @@ function displaySearchResults(data, query) {
         `;
     });
     
+    console.log('Final HTML being set:', html.substring(0, 500) + '...');
     resultsContainer.innerHTML = html;
+    
+    console.log('HTML set successfully, resultsContainer content:', resultsContainer.innerHTML.substring(0, 200) + '...');
     
     // Add click tracking for analytics (if needed)
     trackSearch(query, data.total);
@@ -431,7 +491,19 @@ function searchByCid(cid) {
 
 // Enhanced search results display
 function displaySearchResults(data, query, searchType = 'condição') {
+    console.log('displaySearchResults called with:', {
+        data: data,
+        query: query,
+        searchType: searchType,
+        resultsCount: data.results ? data.results.length : 0
+    });
+    
     const resultsContainer = document.getElementById('searchResults');
+    
+    if (!resultsContainer) {
+        console.error('searchResults container not found!');
+        return;
+    }
     
     if (!data.results || data.results.length === 0) {
         resultsContainer.innerHTML = `
@@ -483,6 +555,9 @@ function displaySearchResults(data, query, searchType = 'condição') {
     `;
     
     data.results.forEach(condition => {
+        // Debug logging
+        console.log('Enhanced search - Processing condition:', condition.name, 'Description:', !!condition.description);
+        
         let extraInfo = '';
         
         // Show medications if searching by medication
@@ -531,10 +606,14 @@ function displaySearchResults(data, query, searchType = 'condição') {
                             ${condition.name}
                         </a>
                         ${condition.description ? `
-                            <p class="text-muted small mt-1 mb-0">
-                                ${condition.description.substring(0, 150)}${condition.description.length > 150 ? '...' : ''}
-                            </p>
-                        ` : ''}
+                            <div class="condition-description mt-2 mb-1">
+                                ${formatDescription(condition.description)}
+                            </div>
+                        ` : `
+                            <div class="text-muted small mt-1">
+                                <em>Sem descrição disponível</em>
+                            </div>
+                        `}
                         ${extraInfo}
                     </div>
                     <div class="ms-3">
@@ -626,3 +705,4 @@ window.performCidSearch = performCidSearch;
 window.searchExample = searchExample;
 window.searchMedicationExample = searchMedicationExample;
 window.searchCidExample = searchCidExample;
+window.formatDescription = formatDescription;

@@ -301,13 +301,15 @@ def fallback_smart_search(query: str, conditions: List[Dict[str, Any]]) -> List[
                     if match_found:
                         break
     
-    # Remove duplicates
+    # Remove duplicates (consider both name and PDF to handle multiple protocols for same condition)
     unique_matches = []
-    seen_names = set()
+    seen_keys = set()
     for match in matches:
-        if match['name'] not in seen_names:
+        # Use name + pdf_name as unique key to allow multiple protocols for same condition
+        key = match['name'] + '|' + match.get('pdf_name', '')
+        if key not in seen_keys:
             unique_matches.append(match)
-            seen_names.add(match['name'])
+            seen_keys.add(key)
     
     # Log the search process
     logger.info(f"Enhanced search for '{query}': found {len(unique_matches)} matches")
@@ -332,12 +334,19 @@ class DataManager:
         files = [f for f in os.listdir(data_dir) if 
                 (f.startswith('ceaf_conditions_') or 
                  f.startswith('enhanced_ceaf_conditions_') or 
-                 f.startswith('enhanced_parsed_ceaf_conditions_')) 
+                 f.startswith('enhanced_parsed_ceaf_conditions_') or
+                 f.startswith('enhanced_with_descriptions_') or
+                 f.startswith('multiple_pdfs_demo_')) 
                 and f.endswith('.json')]
         if not files:
             return {}
         
-        latest_file = sorted(files)[-1]
+        # Prioritize enhanced_ceaf_conditions files over others
+        enhanced_files = [f for f in files if f.startswith('enhanced_ceaf_conditions_')]
+        if enhanced_files:
+            latest_file = sorted(enhanced_files)[-1]
+        else:
+            latest_file = sorted(files)[-1]
         filepath = os.path.join(data_dir, latest_file)
         
         try:
@@ -484,13 +493,15 @@ def search():
             if ai_result not in results:
                 results.append(ai_result)
     
-    # Remove duplicates
+    # Remove duplicates (consider both name and PDF to handle multiple protocols for same condition)
     unique_results = []
-    seen_names = set()
+    seen_keys = set()
     for result in results:
-        if result['name'] not in seen_names:
+        # Use name + pdf_name as unique key to allow multiple protocols for same condition
+        key = result['name'] + '|' + result.get('pdf_name', '')
+        if key not in seen_keys:
             unique_results.append(result)
-            seen_names.add(result['name'])
+            seen_keys.add(key)
     
     # Cache the results for future use
     cache_manager.set_search_results(query, unique_results)

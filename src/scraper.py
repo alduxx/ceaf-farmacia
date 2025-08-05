@@ -221,11 +221,11 @@ class CEAFScraper:
         
         return details
     
-    def find_condition_pdf(self, condition_url: str, condition_name: str) -> Optional[str]:
-        """Find the PDF URL for a specific condition on its page."""
+    def find_condition_pdfs(self, condition_url: str, condition_name: str) -> List[Dict[str, str]]:
+        """Find ALL PDF URLs for a specific condition on its page that match the condition name."""
         soup = self.fetch_page(condition_url)
         if not soup:
-            return None
+            return []
         
         pdf_links = []
         
@@ -244,12 +244,11 @@ class CEAFScraper:
         
         if not pdf_links:
             self.logger.warning(f"No PDF links found for {condition_name}")
-            return None
+            return []
         
-        # Try to match PDF with condition name
+        # Filter PDFs that match the condition name
         condition_words = set(condition_name.lower().split())
-        best_match = None
-        best_score = 0
+        matching_pdfs = []
         
         for pdf_link in pdf_links:
             pdf_text = pdf_link['text'].lower()
@@ -263,20 +262,27 @@ class CEAFScraper:
             
             score = matches / len(condition_words) if condition_words else 0
             
-            if score > best_score:
-                best_score = score
-                best_match = pdf_link
+            # Include PDFs with at least 30% word match
+            if score > 0.3:
+                pdf_link['match_score'] = score
+                matching_pdfs.append(pdf_link)
+                self.logger.info(f"Found matching PDF for {condition_name}: {pdf_link['text']} (score: {score:.2f})")
         
-        if best_match and best_score > 0.3:  # At least 30% word match
-            self.logger.info(f"Found matching PDF for {condition_name}: {best_match['text']}")
-            return best_match['url']
-        
-        # If no good match, return the first PDF (fallback)
-        if pdf_links:
+        # If no good matches, include the first PDF as fallback
+        if not matching_pdfs and pdf_links:
             self.logger.info(f"Using first PDF as fallback for {condition_name}")
-            return pdf_links[0]['url']
+            pdf_links[0]['match_score'] = 0.0
+            matching_pdfs.append(pdf_links[0])
         
-        return None
+        # Sort by match score (highest first)
+        matching_pdfs.sort(key=lambda x: x['match_score'], reverse=True)
+        
+        return matching_pdfs
+    
+    def find_condition_pdf(self, condition_url: str, condition_name: str) -> Optional[str]:
+        """Find the PDF URL for a specific condition on its page (legacy method for compatibility)."""
+        pdfs = self.find_condition_pdfs(condition_url, condition_name)
+        return pdfs[0]['url'] if pdfs else None
     
     def download_pdf(self, pdf_url: str) -> Optional[bytes]:
         """Download PDF content from URL."""
@@ -328,60 +334,153 @@ class CEAFScraper:
         
         return ""
     
+    def create_custom_description(self, condition: Dict[str, any]) -> str:
+        """Create custom description with medications and CID-10 codes."""
+        description_parts = []
+        
+        # Add medications if available
+        if condition.get('medicamentos'):
+            medications = [med.replace('\uf0b7', '').strip() for med in condition['medicamentos']]
+            medications = [med for med in medications if med]  # Remove empty strings
+            if medications:
+                description_parts.append(', '.join(medications))
+        
+        # Add CID-10 codes if available
+        if condition.get('cid_10'):
+            cid_codes = [code.strip() for code in condition['cid_10']]
+            cid_codes = [code for code in cid_codes if code]  # Remove empty strings
+            if cid_codes:
+                description_parts.append(', '.join(cid_codes))
+        
+        return '\n'.join(description_parts) if description_parts else condition.get('description', '')
+    
     def scrape_all_conditions(self, include_details: bool = False, include_pdf_data: bool = False) -> Dict[str, any]:
         """Scrape all clinical conditions and optionally their details."""
         self.logger.info("Starting CEAF conditions scraping...")
         
         # Get the list of conditions
-        conditions = self.extract_clinical_conditions()
+        base_conditions = self.extract_clinical_conditions()
+        all_conditions = []
         
         if include_details or include_pdf_data:
             self.logger.info("Extracting detailed information for each condition...")
-            for i, condition in enumerate(conditions):
-                self.logger.info(f"Processing condition {i+1}/{len(conditions)}: {condition['name']}")
+            for i, base_condition in enumerate(base_conditions):
+                self.logger.info(f"Processing condition {i+1}/{len(base_conditions)}: {base_condition['name']}")
                 
+                # Extract basic details first
                 if include_details:
-                    details = self.extract_condition_details(condition['url'])
-                    condition.update(details)
+                    details = self.extract_condition_details(base_condition['url'])
+                    base_condition.update(details)
                 
                 if include_pdf_data:
-                    pdf_url = self.find_condition_pdf(condition['url'], condition['name'])
-                    if pdf_url:
-                        condition['pdf_url'] = pdf_url
-                        pdf_content = self.download_pdf(pdf_url)
+                    # Find ALL PDFs for this condition
+                    pdf_links = self.find_condition_pdfs(base_condition['url'], base_condition['name'])
+                    
+                    if pdf_links:
+                        # Process the first PDF and create the base condition
+                        first_pdf = pdf_links[0]
+                        condition_copy = base_condition.copy()
+                        
+                        self.logger.info(f"Processing first PDF: {first_pdf['text']}")
+                        condition_copy['pdf_url'] = first_pdf['url']
+                        condition_copy['pdf_name'] = first_pdf['text']
+                        
+                        pdf_content = self.download_pdf(first_pdf['url'])
                         if pdf_content:
                             pdf_text = self.extract_pdf_text(pdf_content)
-                            condition['pdf_text'] = pdf_text
-                            condition['pdf_extracted'] = True
+                            condition_copy['pdf_text'] = pdf_text
+                            condition_copy['pdf_extracted'] = True
                             
                             # Extract structured data using LLM if available, otherwise use text parser
                             if self.llm_processor and pdf_text.strip():
                                 try:
                                     structured_data = self.llm_processor.extract_pdf_structured_data(
-                                        pdf_text, condition['name']
+                                        pdf_text, condition_copy['name']
                                     )
-                                    condition.update(structured_data)
+                                    condition_copy.update(structured_data)
                                 except Exception as e:
-                                    self.logger.warning(f"LLM extraction failed for {condition['name']}, using text parser: {e}")
+                                    self.logger.warning(f"LLM extraction failed for {condition_copy['name']}, using text parser: {e}")
                                     # Fallback to text parser
-                                    structured_data = parse_pdf_text(pdf_text, condition['name'])
-                                    condition.update(structured_data)
+                                    structured_data = parse_pdf_text(pdf_text, condition_copy['name'])
+                                    condition_copy.update(structured_data)
                             elif pdf_text.strip():
                                 # Use text parser when LLM is not available
-                                structured_data = parse_pdf_text(pdf_text, condition['name'])
-                                condition.update(structured_data)
+                                structured_data = parse_pdf_text(pdf_text, condition_copy['name'])
+                                condition_copy.update(structured_data)
                         else:
-                            condition['pdf_extracted'] = False
+                            condition_copy['pdf_extracted'] = False
+                        
+                        # Update description with custom format
+                        condition_copy['description'] = self.create_custom_description(condition_copy)
+                        all_conditions.append(condition_copy)
+                        
+                        # Process additional PDFs (if any) by duplicating the condition
+                        for additional_pdf in pdf_links[1:]:
+                            self.logger.info(f"Processing additional PDF: {additional_pdf['text']}")
+                            
+                            # Create a duplicate condition without the PDF-extracted data
+                            duplicate_condition = base_condition.copy()
+                            
+                            # Keep basic details but remove PDF-specific data from the first PDF
+                            pdf_specific_keys = ['cid_10', 'medicamentos', 'documentos_pessoais', 
+                                               'documentos_medicos', 'exames', 'observacoes', 
+                                               'extraction_method', 'pdf_text', 'pdf_url', 'pdf_name']
+                            for key in pdf_specific_keys:
+                                if key in duplicate_condition:
+                                    del duplicate_condition[key]
+                            
+                            # Process the additional PDF
+                            duplicate_condition['pdf_url'] = additional_pdf['url']
+                            duplicate_condition['pdf_name'] = additional_pdf['text']
+                            
+                            pdf_content = self.download_pdf(additional_pdf['url'])
+                            if pdf_content:
+                                pdf_text = self.extract_pdf_text(pdf_content)
+                                duplicate_condition['pdf_text'] = pdf_text
+                                duplicate_condition['pdf_extracted'] = True
+                                
+                                # Extract structured data
+                                if self.llm_processor and pdf_text.strip():
+                                    try:
+                                        structured_data = self.llm_processor.extract_pdf_structured_data(
+                                            pdf_text, duplicate_condition['name']
+                                        )
+                                        duplicate_condition.update(structured_data)
+                                    except Exception as e:
+                                        self.logger.warning(f"LLM extraction failed for additional PDF, using text parser: {e}")
+                                        structured_data = parse_pdf_text(pdf_text, duplicate_condition['name'])
+                                        duplicate_condition.update(structured_data)
+                                elif pdf_text.strip():
+                                    structured_data = parse_pdf_text(pdf_text, duplicate_condition['name'])
+                                    duplicate_condition.update(structured_data)
+                            else:
+                                duplicate_condition['pdf_extracted'] = False
+                            
+                            # Update description with custom format
+                            duplicate_condition['description'] = self.create_custom_description(duplicate_condition)
+                            all_conditions.append(duplicate_condition)
+                            
+                            # Brief pause between PDFs
+                            time.sleep(1)
                     else:
-                        condition['pdf_extracted'] = False
+                        # No PDFs found, add the condition as-is
+                        base_condition['pdf_extracted'] = False
+                        all_conditions.append(base_condition)
+                else:
+                    # Not processing PDFs, add the condition as-is
+                    all_conditions.append(base_condition)
                 
                 # Be respectful to the server
                 time.sleep(2)
+        else:
+            # No details or PDF processing, just return the base conditions
+            all_conditions = base_conditions
         
         result = {
             'scraped_at': datetime.now().isoformat(),
-            'total_conditions': len(conditions),
-            'conditions': conditions,
+            'total_conditions': len(all_conditions),
+            'base_conditions_count': len(base_conditions),
+            'conditions': all_conditions,
             'source_url': self.target_url
         }
         

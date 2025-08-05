@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Search Descriptions</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-result { border: 1px solid #ccc; padding: 10px; margin: 10px 0; }
+        .debug { background: #f0f0f0; padding: 5px; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <h1>Test Search Descriptions</h1>
+    
+    <button onclick="testSearch()">Test Search for "acne"</button>
+    <button onclick="testFormatDescription()">Test formatDescription Function</button>
+    
+    <div id="results"></div>
+    
+    <script>
+        // Copy the formatDescription function from app.js
+        function formatDescription(description) {
+            console.log('formatDescription called with:', description);
+            
+            if (!description) {
+                console.log('formatDescription: no description provided');
+                return '';
+            }
+            
+            // Split description by newlines (our custom format: medications \n CID-10)
+            const lines = description.split('\n').filter(line => line.trim());
+            console.log('formatDescription: lines found:', lines.length, lines);
+            
+            if (lines.length === 0) {
+                return `<p class="text-muted small mb-0">Sem descrição disponível</p>`;
+            }
+            
+            if (lines.length === 1) {
+                // Single line - could be medications or regular description
+                const line = lines[0].trim();
+                if (line.length > 120) {
+                    return `<p class="text-muted small mb-0">${line.substring(0, 120)}...</p>`;
+                }
+                return `<p class="text-muted small mb-0">${line}</p>`;
+            }
+            
+            // Multiple lines - likely our custom format (medications, CID-10)
+            let html = '';
+            
+            // First line - medications
+            if (lines[0] && lines[0].trim()) {
+                const medications = lines[0].trim();
+                html += `<p class="text-muted small mb-1">
+                    <i class="fas fa-pills me-1 text-success"></i>
+                    <strong>Medicamentos:</strong> ${medications.length > 60 ? medications.substring(0, 60) + '...' : medications}
+                </p>`;
+            }
+            
+            // Second line - CID-10
+            if (lines[1] && lines[1].trim()) {
+                const cidCodes = lines[1].trim();
+                html += `<p class="text-muted small mb-0">
+                    <i class="fas fa-code me-1 text-info"></i>
+                    <strong>CID-10:</strong> ${cidCodes}
+                </p>`;
+            }
+            
+            return html;
+        }
+        
+        function testFormatDescription() {
+            const testDescription = "Isotretinoína 20 mg – Cápsula\nL70.0, L70.1, L70.8";
+            const formatted = formatDescription(testDescription);
+            
+            document.getElementById('results').innerHTML = `
+                <div class="test-result">
+                    <h3>formatDescription Test</h3>
+                    <div class="debug">Input: ${JSON.stringify(testDescription)}</div>
+                    <div class="debug">Output: ${JSON.stringify(formatted)}</div>
+                    <div>Rendered: ${formatted}</div>
+                </div>
+            `;
+        }
+        
+        function testSearch() {
+            fetch('/search?q=acne')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Search API response:', data);
+                    
+                    let html = '<div class="test-result"><h3>Search API Test</h3>';
+                    html += `<div class="debug">Total results: ${data.total}</div>`;
+                    
+                    if (data.results && data.results.length > 0) {
+                        const condition = data.results[0];
+                        html += `<div class="debug">First result name: ${condition.name}</div>`;
+                        html += `<div class="debug">Has description: ${!!condition.description}</div>`;
+                        
+                        if (condition.description) {
+                            html += `<div class="debug">Description: ${JSON.stringify(condition.description)}</div>`;
+                            const formatted = formatDescription(condition.description);
+                            html += `<div class="debug">Formatted: ${JSON.stringify(formatted)}</div>`;
+                            html += `<div>Rendered: ${formatted}</div>`;
+                        }
+                    }
+                    
+                    html += '</div>';
+                    document.getElementById('results').innerHTML = html;
+                })
+                .catch(error => {
+                    console.error('Search error:', error);
+                    document.getElementById('results').innerHTML = `
+                        <div class="test-result">
+                            <h3>Search Error</h3>
+                            <div class="debug">Error: ${error.message}</div>
+                        </div>
+                    `;
+                });
+        }
+    </script>
+</body>
+</html>

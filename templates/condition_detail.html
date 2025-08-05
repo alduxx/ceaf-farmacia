@@ -42,9 +42,16 @@
                     <div class="mt-4">
                         <h5>
                             <i class="fas fa-info-circle me-2 text-secondary"></i>
-                            Descrição Técnica
+                            Resumo Rápido
                         </h5>
-                        <p class="text-muted">{{ condition.description }}</p>
+                        <div class="description-box p-3 border rounded bg-light">
+                            {% set description_lines = condition.description.split('\n') %}
+                            {% for line in description_lines %}
+                                {% if line.strip() %}
+                                    <p class="mb-2 text-muted">{{ line.strip() }}</p>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
                     </div>
                 {% endif %}
             </div>

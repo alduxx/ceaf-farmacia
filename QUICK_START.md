@@ -85,9 +85,10 @@ python run.py
 ### Features to Test
 1. **Main page**: http://localhost:5000
 2. **Search by condition**: Try "acne", "diabetes", "artrite"
-3. **Search by medication**: Try "isotretinoína", "adalimumab"
+3. **Search by medication**: Try "isotretinoína", "adalimumab" 
 4. **Search by CID-10**: Try "L70", "E10", "M05"
 5. **Condition details**: Click on any condition to see full protocol information
+6. **Search results**: Look for descriptions below condition names showing medications and CID-10 codes
 
 ## Troubleshooting
 

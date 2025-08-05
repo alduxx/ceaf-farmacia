@@ -127,6 +127,11 @@ def main():
         print("✅ Scraping completed successfully!")
         print(f"📁 Data saved to: {filepath}")
         print(f"📊 Total conditions: {data['total_conditions']}")
+        if data.get('base_conditions_count'):
+            print(f"📊 Base conditions: {data['base_conditions_count']}")
+            additional_count = data['total_conditions'] - data['base_conditions_count']
+            if additional_count > 0:
+                print(f"📑 Additional conditions from multiple PDFs: {additional_count}")
         
         if include_pdf_data:
             pdf_success = sum(1 for c in data['conditions'] if c.get('pdf_extracted'))
@@ -137,9 +142,58 @@ def main():
                                 if c.get('extraction_method') == 'llm')
                 print(f"🧠 LLM processing: {llm_success}/{data['total_conditions']} successful")
         
+        # Automatically add descriptions to the scraped data
+        print("\n🔧 Adding custom descriptions to scraped data...")
+        try:
+            # Import here to avoid circular imports
+            import json
+            
+            # Load the data we just saved
+            with open(filepath, 'r', encoding='utf-8') as f:
+                data_with_descriptions = json.load(f)
+            
+            # Add descriptions to conditions that don't have them
+            updated_count = 0
+            for condition in data_with_descriptions.get('conditions', []):
+                existing_desc = condition.get('description', '')
+                
+                # Only add description if it doesn't exist or is empty
+                if not existing_desc or existing_desc.strip() == '':
+                    new_description = scraper.create_custom_description(condition)
+                    
+                    if new_description and new_description != existing_desc:
+                        condition['description'] = new_description
+                        updated_count += 1
+            
+            # Update metadata
+            data_with_descriptions['descriptions_added_at'] = datetime.now().isoformat()
+            data_with_descriptions['descriptions_updated_count'] = updated_count
+            
+            # Save the updated data back to the same file
+            with open(filepath, 'w', encoding='utf-8') as f:
+                json.dump(data_with_descriptions, f, ensure_ascii=False, indent=2)
+            
+            print(f"✅ Added descriptions to {updated_count} conditions")
+            
+            # Show sample description if any were added
+            if updated_count > 0:
+                conditions_with_descriptions = [c for c in data_with_descriptions['conditions'] if c.get('description')]
+                if conditions_with_descriptions:
+                    sample = conditions_with_descriptions[0]
+                    print(f"📋 Sample description for '{sample['name']}':")
+                    desc_lines = sample['description'].split('\n')
+                    for i, line in enumerate(desc_lines):
+                        if line.strip():
+                            label = "Medications" if i == 0 else "CID-10" if i == 1 else f"Line {i+1}"
+                            print(f"   {label}: {line.strip()}")
+            
+        except Exception as desc_error:
+            print(f"⚠️  Failed to add descriptions: {desc_error}")
+            print("   You can add them manually later with: python add_descriptions_to_existing_data.py")
+        
         print("\n💡 Next steps:")
         print("   1. Start the web application: python run.py")
-        print("   2. Test the new search functionality")
+        print("   2. Test search functionality - descriptions will appear below condition names")
         print("   3. Check condition detail pages for enhanced information")
         
     except KeyboardInterrupt:
