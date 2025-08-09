@@ -1,0 +1,29 @@
+[Unit]
+Description=CEAF Farmacia - Sistema de Consulta de Medicamentos
+After=network.target
+
+[Service]
+Type=exec
+User=farmacia
+Group=farmacia
+WorkingDirectory=/opt/farmacia
+Environment=PATH=/opt/farmacia/venv/bin
+Environment=FLASK_ENV=production
+Environment=PYTHONPATH=/opt/farmacia/src
+ExecStart=/opt/farmacia/venv/bin/gunicorn --config /opt/farmacia/gunicorn.conf.py src.app:app
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=always
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=farmacia
+
+# Security settings
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/farmacia/cache /opt/farmacia/logs /opt/farmacia/data
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
